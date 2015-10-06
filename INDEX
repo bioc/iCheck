@@ -1,0 +1,29 @@
+genExprSet              Generate ExpressionSet object
+genSimData.BayesNormal	Generate simulated data from conditional
+			normal distributions
+getPCAFunc		Get principal components of arrays
+glmWrapper		Wrapper function for 'glm'
+lkhrWrapper		Wrapper function for 'lrtest' of R package 'lmtest'
+			to do likelihood ratio test by comparing 2 glm models 
+lmFitPaired		Wrapper function for 'lmFit' of R Bioconductor
+			package 'limma' for paired data
+lmFitWrapper		Wrapper function for 'lmFit' of R Bioconductor
+			package 'limma'
+LumiBatch2Table		Output an ExpressionSet objects to 3 files:
+			expression data file, phenotype data file,
+			and feature data file
+pca2DPlot		Plot the 2 specified principal components 
+			of arrays based on function plot
+pca3DPlot		Plot the 3 specified principal components 
+			of arrays based on function plot
+plotCurves		Plot trajectories of probe profiles across arrays
+plotQCCurves		Plot trajectories of specific QC probes 
+			(e.g., biotin, cy3_hyb, housekeeping gene probes, 
+			low stringency probes, etc.) across arrays
+plotSamplep95p05	Plot trajectories of the ratio of 95th percentile
+			to 5th percentile of sample probe profiles
+			across arrays
+quantilePlot		Plot trajectories of quantiles across arrays
+R2PlotFunc		Draw heatmap of square of correlations among
+			arrays
+sortExpressionSet   sort the order of samples for an ExpressionSet object

@@ -1,0 +1,103 @@
+export(
+  genExprSet,
+  genSimData.BayesNormal,
+  getPCAFunc,
+  glmWrapper,
+  lkhrWrapper,
+  lmFitPaired,
+  lmFitWrapper,
+  LumiBatch2Table,
+  pca2DPlot,
+  pca3DPlot,
+  plotCurves,
+  plotQCCurves,
+  plotSamplep95p05,
+  quantilePlot,
+  R2PlotFunc,
+  sortExpressionSet
+)
+
+import(Biobase)
+
+import(lumi)
+import(gplots)
+
+
+importMethodsFrom(Biobase,
+    exprs, fData,  pData, featureNames,
+    protocolData, combine, sampleNames, phenoData)
+
+
+importFrom(graphics,
+          legend,
+          lines,
+          title,
+          par,
+          points,
+          box,
+          axis,
+          abline
+          )
+
+
+
+importFrom(MASS,
+          ginv,
+          mvrnorm)
+
+importFrom(preprocessCore,
+          normalize.quantiles)
+
+
+importFrom(limma,
+                 lmFit, eBayes, trimWhiteSpace)
+
+importFrom(lmtest,
+                 lrtest)
+
+importFrom(grDevices,
+                 rainbow, pdf, dev.off)
+
+
+importFrom(GeneSelectMMD,
+                 obtainResi)
+
+importFrom(randomForest,
+            randomForest)
+
+importFrom(scatterplot3d,
+          scatterplot3d)
+
+importFrom(vsn,
+           vsn)
+
+importFrom(affy,
+           bg.adjust)
+
+importFrom(parallel,
+          mclapply)
+
+importFrom(rgl,
+          rgl.useNULL)
+
+
+importFrom(stats,
+          cor,
+          dnorm,
+          qqnorm,
+          sd,
+          t.test,
+          var,
+          wilcox.test,
+          p.adjust,
+          model.matrix,
+          dendrapply,
+          rchisq,
+          rnorm,
+          na.omit,
+          prcomp,
+          gaussian,
+          glm,
+          quantile,
+          mad
+          )

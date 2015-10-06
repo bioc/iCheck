@@ -1,0 +1,25 @@
+Package: iCheck
+Type: Package
+Title: QC Pipeline and Data Analysis Tools for High-Dimensional
+        Illumina mRNA Expression Data
+Version: 0.99.7
+Date: 2015-09-29
+Author: Weiliang Qiu <stwxq@channing.harvard.edu>, Brandon Guo
+        <brandowonder@gmail.com> Christopher Anderson
+        <christopheranderson84@gmail.com>, Barbara Klanderman
+        <BKLANDERMAN@partners.org>, Vincent Carey
+        <stvjc@channing.harvard.edu>, Benjamin Raby
+        <rebar@channing.harvard.edu>
+Maintainer: Weiliang Qiu <stwxq@channing.harvard.edu>
+Depends: R (>= 3.2.0), Biobase, lumi, gplots
+Imports: stats, graphics, preprocessCore, grDevices, randomForest,
+        affy, limma, parallel, vsn, GeneSelectMMD, rgl, MASS, lmtest,
+        scatterplot3d
+Suggests:
+biocViews: GeneExpression, DifferentialExpression, Microarray,
+        Preprocessing, DNAMethylation, OneChannel, TwoChannel,
+        QualityControl
+Description: QC pipeline and data analysis tools for high-dimensional
+        Illumina mRNA expression data.
+License: GPL (>= 2)
+NeedsCompilation: no

@@ -1,0 +1,649 @@
+% -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
+%\VignetteIndexEntry{iCheck}
+%\VignetteKeywords{Illumina, expression, QC}
+%\VignetteDepends{iCheck, Biobase, vsn, gplots, preprocessCore, lumi, affy, MASS, scatterplot3d, GeneSelectMMD, randomForest, rgl}
+%\VignettePackage{iCheck}
+
+\documentclass[a4paper]{article}
+
+\usepackage{amsmath,pstricks}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+
+\SweaveOpts{keep.source=TRUE}
+
+\author{Weiliang Qiu$^\ddagger$\footnote{stwxq (at) channing.harvard.edu}, 
+Brandon Guo$^\ddagger$\footnote{brandowonder (at) gmail.com},
+Christopher Anderson$^\ddagger$\footnote{christopheranderson84 (a) gmail.com},
+Barbara Klanderman$^\ddagger$\footnote{BKLANDERMAN (at) partners.org},\cr
+Vincent Carey$^\ddagger$\footnote{stvjc (at) channing.harvard.edu}, 
+Benjamin Raby$^\ddagger$\footnote{rebar (at) channing.harvard.edu}}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\setkeys{Gin}{width=1\textwidth}
+
+\title{iCheck: A package checking data quality of Illumina expression data}
+\maketitle
+\begin{center}$^\ddagger$Channing Division of Network Medicine \\ Brigham and Women's Hospital / Harvard Medical School \\ 181 Longwood Avenue, Boston, MA, 02115, USA
+\end{center}
+
+\tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Overview of iCheck}
+
+The \texttt{iCheck} package provides QC pipeline and data analysis tools 
+for high-dimensional Illumina mRNA expression data.
+It provides several visualization tools to help identify gene probes with outlying expression 
+levels, arrays with low quality, batches caused technical factors, batches caused 
+by biological factors, and gender mis-match checking, etc.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We first generate a simulated data set to illustrate the usage of iCheck functions.
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+  library(iCheck)
+
+  if (!interactive())
+  {
+    options(rgl.useNULL = TRUE)
+  }
+
+  # generate sample probe data 
+  set.seed(1234567)
+  es.sim = genSimData.BayesNormal(nCpGs = 110, 
+    nCases = 20, nControls = 20,
+    mu.n = -2, mu.c = 2,
+    d0 = 20, s02 = 0.64, s02.c = 1.5, testPara = "var",
+    outlierFlag = FALSE, 
+    eps = 1.0e-3, applier = lapply) 
+  print(es.sim)
+
+  # create replicates
+  dat=exprs(es.sim)
+  dat[,1]=dat[,2]
+  dat[,3]=dat[,4]
+  
+
+  exprs(es.sim)=dat
+  es.sim$arrayID=as.character(es.sim$arrayID)
+  es.sim$arrayID[1]=es.sim$arrayID[2]
+  es.sim$arrayID[3]=es.sim$arrayID[4]
+  es.sim$arrayID[5:8]="Hela"
+
+  # since simulated data set does not have 'Pass_Fail',
+  #  'Tissue_Descr', 'Batch_Run_Date', 'Chip_Barcode',
+  #  'Chip_Address', 'Hybridization_Name', 'Subject_ID', 'gender'
+  # we generate them now to illustrate the R functions in the package 
+
+  es.sim$Hybridization_Name = paste(es.sim$arrayID, 1:ncol(es.sim), sep="_")
+  # assume the first 4 arrays are genetic control samples
+  es.sim$Subject_ID = es.sim$arrayID
+
+  es.sim$Pass_Fail = rep("pass", ncol(es.sim))
+
+  # produce genetic control GC samples
+  es.sim$Tissue_Descr=rep("CD4", ncol(es.sim))
+  # assume the first 4 arrays are genetic control samples
+  es.sim$Tissue_Descr[5:8]="Human Hela Cell"
+
+  es.sim$Batch_Run_Date = 1:ncol(es.sim)
+  es.sim$Chip_Barcode = 1:ncol(es.sim)
+  es.sim$Chip_Address = 1:ncol(es.sim)
+
+  es.sim$gender=rep(1, ncol(es.sim))
+  set.seed(12345)
+  pos=sample(x=1:ncol(es.sim), size=ceiling(ncol(es.sim)/2), replace=FALSE) 
+  es.sim$gender[pos]=0
+
+
+  # generate sample probe data 
+  es.raw = es.sim[-c(1:10),]
+  print(es.raw)
+  
+  # generate QC probe data 
+  es.QC = es.sim[c(1:10),]
+
+  # since simulated data set does not have 'Reporter_Group_Name'
+  #  we created it now to illustrate the usage of 'plotQCCurves'.
+  fDat=fData(es.QC)
+  fDat$Reporter_Group_Name=rep("biotin", 10)
+  fDat$Reporter_Group_Name[3:4]="cy3_hyb"
+  fDat$Reporter_Group_Name[5:6]="housekeeping"
+  fDat$Reporter_Group_Name[7:8]="low_stringency_hyb"
+  fData(es.QC)=fDat
+
+  print(es.QC)
+  
+@
+
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exclude failed arrays}
+The meta data variable \verb+Pass_Fail+ indicates if
+an array is technically failed. We first should exclude
+these arrays.
+
+We first check the values of the variable \verb+Pass_Fail+:
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+print(table(es.raw$Pass_Fail, useNA="ifany"))
+@
+
+If there exist failed arrays, then we exclude them:
+
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+pos<-which(es.raw$Pass_Fail != "pass")
+if(length(pos))
+{
+  es.raw<-es.raw[, -pos]
+  es.QC<-es.QC[, -pos]
+}
+@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Check QC probes}
+The function \verb+plotQCCurves+ shows plot of quantiles
+across arrays for each type of QC probes.
+We expect the trajectories of quantiles across arrays are horizontal lines.
+
+To get a better view, the arrays will be sorted based on variables
+specified in the function argument \verb+varSort+.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+     plotQCCurves(
+         esQC=es.QC,
+         probes = c("biotin"), #"cy3_hyb", "housekeeping"),
+           #"low_stringency_hyb"),
+         labelVariable = "subjID",
+         hybName = "Hybridization_Name",
+         reporterGroupName = "Reporter_Group_Name",
+         requireLog2 = FALSE,
+         projectName = "test",
+         plotOutPutFlag = FALSE,
+         cex = 1,
+         ylim = NULL,
+         xlab = "",
+         ylab = "log2(intensity)",
+         lwd = 3,
+         mar = c(10, 4, 4, 2) + 0.1,
+         las = 2,
+         cex.axis = 1,
+         sortFlag = TRUE,
+         varSort = c("Batch_Run_Date", "Chip_Barcode", "Chip_Address"),
+         timeFormat = c("%m/%d/%Y", NA, NA)
+       )  
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Check squared correlations among genetic control (GC) arrays}
+
+Next, we draw heatmap of the squared correlations among GC arrays.
+We expect the squared correlations among GC arrays are high ($>0.90$).
+
+The function argument \verb+labelVariable+ indicates
+which meta variable will be used to label the arrays in the 
+heatmap.
+
+If we draw heatmap for replicated arrays, we can set
+the function arguments \verb+sortFlag=TRUE+,
+
+{\scriptsize
+\begin{verbatim}
+varSort=c("Subject_ID", "Hybridization_Name", 
+  "Batch_Run_Date", "Chip_Barcode", "Chip_Address")
+
+and
+
+timeFormat=c(NA, NA, "%m/%d/%Y", NA, NA)
+
+\end{verbatim}
+}
+so that arrays from the same subjects will be grouped together
+in the heatmap.
+
+Note that although the meta variable \verb+Batch_Run_Date+ records
+time, it is vector of string character in R. The function 
+\verb+R2PlotFunc+ will automatically convert it to time variable
+if we set the value of the argument \verb+timeFormat+ corresponding
+to the variable \verb+Batch_Run_Date+ as a time format like
+\verb+"%m/%d/%Y"+. Details about the time format, please see
+the R function \verb+strptime+.
+
+The followings show example R code to draw  heatmap of
+GC arrays.
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+     R2PlotFunc(
+         es=es.raw,
+         hybName = "Hybridization_Name",
+         arrayType = "GC",
+         GCid = c("128115", "Hela", "Brain"),
+         probs = seq(0, 1, 0.25),
+         col = gplots::greenred(75),
+         labelVariable = "subjID",
+         outFileName = "test_R2_raw.pdf",
+         title = "Raw Data R^2 Plot",
+         requireLog2 = FALSE,
+         plotOutPutFlag = FALSE,
+         las = 2,
+         keysize = 1,
+         margins = c(10, 10),
+         sortFlag = TRUE,
+         varSort=c("Batch_Run_Date", "Chip_Barcode", "Chip_Address"),
+         timeFormat=c("%m/%d/%Y", NA, NA)
+       )  
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exclude GC arrays}
+
+We next exclude GC arrays and will focus on sample arrays to check
+data quality.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=FALSE>>=
+print(table(es.raw$Tissue_Descr, useNA="ifany"))
+
+# for different data sets, the label for GC arrays might
+# be different.
+pos.del<-which(es.raw$Tissue_Descr == "Human Hela Cell")
+cat("No. of GC arrays=", length(pos.del), "\n")
+
+if(length(pos.del))
+{
+  es.raw<-es.raw[,-pos.del]
+  es.QC<-es.QC[,-pos.del]
+  print(dims(es.raw))
+  print(dims(es.QC))
+}
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Check squared correlations among replicated arrays}
+Check squared correlations among replicated arrays (excluding GC arrays).
+We expect within subject correlations will be high.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+     R2PlotFunc(
+         es=es.raw,
+         arrayType = c("replicates"),
+         GCid = c("128115", "Hela", "Brain"),
+         probs = seq(0, 1, 0.25),
+         col = gplots::greenred(75),
+         labelVariable = "subjID",
+         outFileName = "test_R2_raw.pdf",
+         title = "Raw Data R^2 Plot",
+         requireLog2 = FALSE,
+         plotOutPutFlag = FALSE,
+         las = 2,
+         keysize = 1,
+         margins = c(10, 10),
+         sortFlag = TRUE,
+         varSort=c("Subject_ID", "Hybridization_Name", "Batch_Run_Date", "Chip_Barcode", "Chip_Address"),
+         timeFormat=c(NA, NA, "%m/%d/%Y", NA, NA)
+       )  
+
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Obtain plot of quantiles across arrays}
+% detect bad arrays and/or outlying expression levels
+
+We next draw plot of quantiles across sample arrays.
+We expect the trajectories of quantiles be horizontal.
+However, for real data, some patterns of the trajectories
+might appear indicating the existence of some batch effects.
+
+Some times, the quantile plots can show that 
+some probes have some outlying expression levels.
+In this case, we can delete those gene probes.
+
+Note that by default, the function argument \verb+requireLog2 = TRUE+.
+Hence, we need to take log2 transformation to identify which 
+gene probes containing outlying expression levels.
+
+By default, we will sort the arrays by the ascending order of
+the median absolute deviation (MAD) to have a better view
+of the trajectories of quantiles.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+     quantilePlot(
+         dat=exprs(es.raw),
+         fileName,
+         probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1),
+         plotOutPutFlag = FALSE,
+         requireLog2 = FALSE,
+         sortFlag = TRUE,
+         cex = 1,
+         ylim = NULL,
+         xlab = "",
+         ylab = "log2(intensity)",
+         lwd = 3,
+         main = "Trajectory plot of quantiles\n(sample arrays)",
+         mar = c(15, 4, 4, 2) + 0.1,
+         las = 2,
+         cex.axis = 1
+         )
+@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exclude gene probes with outlying expression levels}
+if quantile plots show some outlying expression levels, we
+can use the following R code to identify the gene probes
+with outlying expression levels.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=FALSE>>=
+# note we need to take log2 transformation
+# if requireLog2 = TRUE.
+requireLog2 = FALSE
+if(requireLog2)
+{  
+  minVec<-apply(log2(exprs(es.raw)), 1, min, na.rm=TRUE)
+  # suppose the cutoff is 0.5
+  print(sum(minVec< 0.5))
+  pos.del<-which(minVec<0.5)
+
+  cat("Number of gene probes with outlying expression levels>>",
+  length(pos.del), "\n")
+  if(length(pos.del))
+  {
+    es.raw<-es.raw[-pos.del,]
+  }
+}
+
+@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Obtain plot of the ratio ($p_{95}/p_{05}$) of 95-th percentile to 5-th percentile across arrays}
+% detect bad arrays
+
+We next draw the plot of the ratio of p95 over p05 across arrays,
+where p95 (p05) is the 95-th (5-th) percentile of a array.
+If an array with the ratio $p95/p05$ is less than $6$, then we regard
+this array as a bad array and should delete it before further analysis.
+
+Note that we should set \verb+requireLog2 = FALSE+.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+     plotSamplep95p05(
+         es=es.raw,
+         labelVariable = "memSubj",
+         requireLog2 = FALSE,
+         projectName = "test",
+         plotOutPutFlag = FALSE,
+         cex = 1,
+         ylim = NULL,
+         xlab = "",
+         ylab = "",
+         lwd = 1.5,
+         mar = c(10, 4, 4, 2) + 0.1,
+         las = 2,
+         cex.axis=1.5,
+         title = "Trajectory of p95/p05",
+         cex.legend = 1.5,
+         cex.lab = 1.5,
+         legendPosition = "topright",
+         cut1 = 10,
+         cut2 = 6,
+         sortFlag = TRUE,
+         varSort = c("Batch_Run_Date", "Chip_Barcode", "Chip_Address"),
+         timeFormat = c("%m/%d/%Y", NA, NA),
+         verbose = FALSE)
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Exclude arrays with $p_{95}/p_{05}\leq 6$}
+If there exist arrays with $p95/p05<6$, we then need to 
+exclude these arrays from further data analysis. The followings
+are  example R code:
+
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+p95<-quantile(exprs(es.raw), prob=0.95)
+p05<-quantile(exprs(es.raw), prob=0.05)
+
+r<-p95/p05
+pos.del<-which(r<6)
+print(pos.del)
+
+if(length(pos.del))
+{
+  es.raw<-es.raw[,-pos.del]
+  es.QC<-es.QC[,-pos.del]
+}
+
+@
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Obtain Plot of principal components}
+% check batch effects 
+
+We next draw pca plots to double check batch effects
+or treatment effects indicated by dendrogram.
+
+The first step is to obtain principal components using
+the function \verb+getPCAFunc+.
+For large data set, this function might be very slow.
+
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+
+     pcaObj<-getPCAFunc(es=es.raw,
+                labelVariable = "subjID",
+                requireLog2 = FALSE,
+                corFlag = FALSE
+              
+               
+     )
+
+@
+
+We then plot the first 2 or 3 principal components and label
+the data points by meta variables of interests, such as
+tissue type, study center, batch id, etc..
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+     pca2DPlot(pcaObj=pcaObj,
+               plot.dim = c(1,2),
+               labelVariable = "memSubj",
+               outFileName = "test_pca_raw.pdf",
+               title = "Scatter plot of pcas (memSubj)",
+               plotOutPutFlag = FALSE,
+               mar = c(5, 4, 4, 2) + 0.1,
+               lwd = 1.5,
+               equalRange = TRUE,
+               xlab = NULL,
+               ylab = NULL,
+               xlim = NULL,
+               ylim = NULL,
+               cex.legend = 1.5,
+               cex = 1.5,
+               cex.lab = 1.5,
+               cex.axis = 1.5,
+               legendPosition = "topright"
+             
+               )
+@
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Perform background correction, data transformation and normalization}
+
+<<echo=TRUE, eval=TRUE,print=FALSE>>=
+tt <- es.raw
+es.q<-lumiN(tt, method="quantile")
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Obtain Plot of principal components for pre-processed data}
+% check batch effects 
+
+After pre-processing data, we do  principal component analysis again.
+
+Note that we should set 
+         \verb+requireLog2 = FALSE+.
+
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+     pcaObj<-getPCAFunc(es=es.q,
+                labelVariable = "subjID",
+                requireLog2 = FALSE,
+                corFlag = FALSE
+                
+     )
+
+
+     pca2DPlot(pcaObj=pcaObj,
+               plot.dim = c(1,2),
+               labelVariable = "memSubj",
+               outFileName = "test_pca_raw.pdf",
+               title = "Scatter plot of pcas (memSubj)\n(log2 transformed and quantile normalized)",
+               plotOutPutFlag = FALSE,
+               mar = c(5, 4, 4, 2) + 0.1,
+               lwd = 1.5,
+               equalRange = TRUE,
+               xlab = NULL,
+               ylab = NULL,
+               xlim = NULL,
+               ylim = NULL,
+               cex.legend = 1.5,
+               cex = 1.5,
+               cex.lab = 1.5,
+               cex.axis = 1.5,
+               legendPosition = "topright"
+               )
+
+@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Incorporate phenotype data}
+In addition meta data, we usually have phenotype data to
+describe subjects. We can now add them in.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data analysis}
+
+\subsection{lmFitWrapper and lmFitPaired}
+\verb+iCheck+ provide 2 limma wrapper functions
+\verb+lmFitPaired+ (for paired data) and 
+\verb+lmFitWrapper+ (for unpaired data).
+
+Note that the function argument
+\verb+pos.var.interest = 1+ requests the results 
+(test statistic and p-value) for the first covariate
+will be print out.
+
+If \verb+pos.var.interest = 0+, then the results 
+(test statistic and p-value) for the intercept
+will be print out.
+
+The outcome variable must be gene probes. Can not be phenotype variables.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=FALSE>>=
+
+res.limma=lmFitWrapper(
+  es=es.q, 
+  formula=~as.factor(memSubj), 
+  pos.var.interest = 1,
+  pvalAdjMethod="fdr", 
+  alpha=0.05, 
+  probeID.var="probe", 
+  gene.var="gene", 
+  chr.var="chr", 
+  verbose=TRUE)
+
+@
+
+
+%%%%%%%%%%%%%%%%%%
+\subsection{glmWrapper}
+outcome variable can be phenotype variables. The function argument
+\verb+family+ indicates if logistic regression (\verb+family=binomial+) used
+or general linear regression (\verb+family=gaussian+) used.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=FALSE>>=
+
+res.glm=glmWrapper(
+  es=es.q,
+  formula = xi~as.factor(memSubj), 
+  pos.var.interest = 1,
+  family=gaussian,
+  logit=FALSE, 
+  pvalAdjMethod="fdr", 
+  alpha = 0.05, 
+  probeID.var = "probe", 
+  gene.var = "gene", 
+  chr.var = "chr", 
+  applier=lapply,
+  verbose=TRUE 
+  )
+
+@
+
+
+\subsection{lkhrWrapper}
+
+Likelihood ratio test wrapper. Compare 2 glm models. One is reduced model. The other is full model.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=FALSE>>=
+
+res.lkh=lkhrWrapper(
+  es=es.q,
+  formulaReduced = xi~as.factor(memSubj), 
+  formulaFull = xi~as.factor(memSubj)+gender, 
+  family=gaussian,
+  logit=FALSE, 
+  pvalAdjMethod="fdr", 
+  alpha = 0.05, 
+  probeID.var = "probe", 
+  gene.var = "gene", 
+  chr.var = "chr", 
+  applier=lapply,
+  verbose=TRUE 
+  )
+
+@
+
+
+%\section{Citation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Session Info}
+Finally, we need to print out the session info so that
+later we can know which versions the packages are from.
+
+<<sessionInfo, results=tex, print=TRUE>>=
+toLatex(sessionInfo())
+@ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Acknowledgments}
+
+%\section{References}
+
+%\bibliographystyle{plainnat}
+%\bibliography{iCheck}
+
+
+\end{document}
+

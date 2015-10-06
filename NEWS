@@ -1,0 +1,724 @@
+#Version 0.99.7(Sept. 29, 2015)
+##  deleted read.bgx and readData functions from this release
+#    will add them on later
+#
+#  (1) thank Valerie for the following suggestions:
+#
+#   1) man page examples
+#
+#    Neither read.bgx() or readData() have a running example in the man page nor are they used in
+#     the vignette. Please add examples to these man pages. The issue is that each night the build
+#      system runs build and check on each package which makes sure all man page examples and the
+#       code in the vignette are functioning as expected, the proper dependencies are available.
+#
+#        If you need a sample .bgx file, you can include a small subset in inst/extdata.
+#
+#
+#         2) dependencies
+#
+#          If gplots and lumi are required for any of the functions in iCheck they should be in Depends
+#           or Imports in DESCRIPTION and imported accorrdingly in the NAMESPACE. Warning messages such
+#            as these should never be needed:
+#
+#             ~/sandbox/iCheck/R >grep library *
+#              plotFuncs.R:  { stop("The library 'gplots' is required to draw heatmap\n") }
+#               readData.R:    stop("library 'lumi' is required to do vsn normalization!\n")
+#
+#                You have both packages in Depends in DESCRIPTION but have selectively imported in the
+#                 NAMESPACE. This doesn't make sense. If a package is in Depends it should be fully imported,
+#
+#                  import(lumi)
+#                   import(gplots)
+#
+#                    If you only need select functions, then they should be in the Imports field in DESCRIPTION.
+#
+#                     ** This goes for all packages in Depends; if in Depends they need to be fully imported in
+#                      the NAMESPACE.
+#
+#
+#                       3) unnecessary library() calls
+#
+#                        Please remove these library() calls. Even though they are commented out, the are uncessary.
+#
+#                         ~/sandbox/iCheck/man >grep library *
+#                          lkhrWrapper.Rd:#library(lmtest)
+#                           lmFitPaired.Rd:#library(limma)
+#                            lmFitWrapper.Rd:#library(limma)
+#                             pca3DPlot.Rd:#library(scatterplot3d)
+#                              plotCurves.Rd:  #library(Biobase)
+#                               plotSamplep95p05.Rd:  #library(Biobase)
+#                                sortExpressionSet.Rd:  #library(Biobase)
+#
+#
+#                                 4) vignette
+#
+#                                  i) library() calls
+#
+#                                   If Biobase and gplots are in Depends and fully imported in the NAMESPACE you do not need to
+#                                    load them when you load iCheck. Please remove these from lines 54, 55:
+#
+#                                       library(gplots)
+#                                          library(Biobase)
+#
+#                                           ii) unevaluated code
+#
+#                                            Why is the code unevaluated in these sections? They don't look like time-consuming
+#                                             operations ...?
+#
+#                                              \section{Exclude GC arrays}
+#                                               \section{Check squared correlations among replicated arrays}
+#
+#
+#
+#Version 0.99.6(Sept. 17, 2015)
+#  (1) thank Valerie for the following suggestions:
+#* Checking if other packages can import this one...
+#    * REQUIRED: Packages (graphics, stats) which provide abline, mad
+#      (used in readbgx, readbgx2) should be imported in the NAMESPACE
+#      file, otherwise packages that import iCheck could fail.
+#
+#* Checking R Version dependency...
+#    * RECOMMENDED: Update R version dependency from 3.1.0 to 3.2.
+#
+#This one is up to you. We generate suggested BiocViews - the idea is that they help
+#other users find your package.
+#
+#* Checking for recommended biocViews...
+#    * CONSIDER: Adding some of these automatically suggested biocViews:
+#      Microarray, Preprocessing, DNAMethylation, OneChannel,
+#      TwoChannel, QualityControl
+#
+#Version 0.99.5(Sept. 9, 2015)
+#  (1) remove the /dontrun statements in the man pages
+#Version 0.99.4(Sept. 4, 2015)
+#  (2) put 'MASS', 'limma', 'lmtest', 'scatterplot3d', 'beadarray' and 'Biobase' to Dependes
+#
+#  (1) fix problems flagged in the single package build report:
+#* Checking exported objects have runnable examples...
+#    * REQUIRED: At least 80% of man pages documenting exported objects
+#      must have runnable examples.The following pages do not:
+#      genExprSet.Rd, genSimData.BayesNormal.Rd, lmFitPaired.Rd,
+#  LumiBatch2Table.Rd, pca2DPlot.Rd, pca3DPlot.Rd, plotCurves.Rd,
+#  plotQCCurves.Rd, plotSamplep95p05.Rd, quantilePlot.Rd, R2PlotFunc.Rd,
+#  readbgx.Rd, readData.Rd
+#
+#* Checking if other packages can import this one...
+#    * REQUIRED: Packages (graphics, graphics, graphics, graphics) which
+#      provide box, axis, box, axis (used in plotSamplep95p05,
+#      quantilePlot, readbgx, readbgx2) should be imported in the
+#      NAMESPACE file, otherwise packages that import iCheck could fail.
+
+#Version 0.99.3(Aug 20, 2015)
+#  (1) to fix error message about rgl after asking Dr. Duncan Murdoch,
+#  who is the author of the package 'rgl':
+# 
+#If you use something like this:
+#
+#if (!interactive())
+#  options(rgl.useNULL = TRUE)
+#
+#before making any rgl calls, then rgl won't try to open a display, and
+#you shouldn't have problems.  You might have trouble doing this if you
+#don't know why your package is calling rgl, though.
+##
+#  (2) add the following import in NAMESPACE: 
+#     stats: rchisq, rnorm, na.omit, prcomp, gaussian, glm, 
+#        quantile, 
+#     graphics: par, dev.off, points
+#     rgl: rgl.useNULL
+#
+#Version 0.99.2(Aug 19, 2015)
+#  (1) remove assayDataNew to fix one of the error during checking process
+#  (2) set all examples relating plotting figures as dontrun to avoid
+#       the error "unable to open X11 display"
+#     and the error "error in rgl_init"
+#
+#Version 0.99.1(Aug 18, 2015)
+#  (1) fix errors occurred in bioconductor checking :
+#  * Installing package...
+#  Warning in rgl.init(initValue, onlyNULL) :
+#    RGL: unable to open X11 display
+#  Warning in fun(libname, pkgname) : error in rgl_init
+#  No methods found in "Biobase" for requests: assayDataNew
+#
+#
+#  >>>>>>> 
+#  >>>>>>> INSTALLATION WITH 'R CMD INSTALL --preclean --library=libdir iCheck_0.99.0.tar.gz'
+#  >>>>>>> 
+#  
+#  * installing *source* package iCheck ...
+#  ** R
+#  ** preparing package for lazy loading
+#  Warning in rgl.init(initValue, onlyNULL) :
+#    RGL: unable to open X11 display
+#  Warning in fun(libname, pkgname) : error in rgl_init
+#  No methods found in "Biobase" for requests: assayDataNew
+#  ** help
+#  *** installing help indices
+#  ** building package indices
+#  ** testing if installed package can be loaded
+#  Warning in rgl.init(initValue, onlyNULL) :
+#    RGL: unable to open X11 display
+#  Warning in fun(libname, pkgname) : error in rgl_init
+#  No methods found in "Biobase" for requests: assayDataNew
+#  * DONE (iCheck)
+#
+#  #
+#   Checking for bioc-devel mailing list subscription...
+#  Error in curl::curl_fetch_memory(url, handle = handle) : 
+#    Timeout was reached
+#  Calls: <Anonymous> ... request_fetch -> request_fetch.write_memory -> <Anonymous> -> .Call
+#  Execution halted
+#  #  
+#
+#
+#  * testing if installed package can be loaded
+#  Warning in rgl.init(initValue, onlyNULL) :
+#    RGL: unable to open X11 display
+#  Warning in fun(libname, pkgname) : error in rgl_init
+#  No methods found in "Biobase" for requests: assayDataNew
+#
+#  (2) remove unused functions
+#  (3) revise readData function to explicit required 
+#      phenotype variables and feature variables
+#  (4) remove the input parameter 'detectPval' in 'genExprsSet' function
+#
+#Version 0.99.0(Aug 14, 2015)
+#  (1)Submit to R Bioconductor
+#
+#Version 0.7.2 (Aug 13, 2015)
+#  (1) add a function 'genSimData.BayesNormal' to generate simulated data set
+#  (2) add examples in Rd files
+#  (3) revise vignettes
+#  (4) delete 'calDpv' input parameter in read data functions
+#
+#Version 0.7.1 (Aug 5, 2015)
+#  (1) Simplify the package to be submitted to R Bioconductors
+#
+#Version 0.7.0 (Aug 11, 2014)
+#  (1) fixed a bug in the function 'LumiBatch2Table': should assign column name for the first column
+#      of 'dat' and 'detect'
+#  (2) add an input option 'quote' to the function 'LumiBatch2Table'
+#
+# Version 0.6.9 (Feb 14, 2014)
+#  (1) fixed a bug in  'getPCAFunc': 
+#       forgot updating 'es' after deleting probes with missing values
+#
+# Version 0.6.8 (Jan 11, 2014)
+#  (1) revised 'getPCAFunc': set 'corFlag = FALSE'
+# 
+# Version 0.6.7 (Sept 29, 2013)
+#  (1) revised 'getPCAFunc': added line
+#      dat=na.omit(dat)
+#    right before the calling of the function prcompt
+#
+#
+# Version 0.6.6 (Sept 05, 2013)
+# (1) add output of regression coefficients from glmWrapper
+# Version 0.6.5 (August 21, 2013)
+# #  (1) fixed a typo in the warning message of 'lmFitWrapper':
+# #     lkhRatioWrapper should be lkhWrapper
+#    (2) remove genderCheck function output since it is not ready yet
+# #
+# Version 0.6.3 (March 22, 2013)
+#  (1) fixed 2 bugs in function plotQCCurves: requireLog2 should take FALSE
+#       when calling 'plotCurves' inside plotQCCurves because data passed
+#       to plotCurves has been log2 transformed when calling 
+#       getDatColnames; when plot curve other than 'signal',
+#       need to call 'getDatColnames' to use ' labelVariable'
+#  (2) delete input arguments 'sortFlag', 'varSort' and 'timeFormat' in functions
+#      'hclustPlotFunc' and 'getPCAFunc'
+# Version 0.6.2 (March 22, 2013)
+#  (1) fixed a bug in pca2DPlot and pca3DPlot: did not sort pcs when sort
+#   expression data. Actually, we do not need to resort the data since
+#   it was sorted in the function 'getPCAFunc'. 
+#   To fix this bug, I deleted the input arguments:
+#   'sortFlag', 'varSort' and 'timeFormat' from these 2 functions   
+#
+# Version 0.6.1 (March 21, 2013)
+#  (1) updated the manual file for the function 'getPCAFunc' (adding more info for the output 'pcs')
+#  
+# Version 0.6.0 (Jan. 18, 2013)
+#  (1) rename 'log.txt' to 'NEWS'
+#  (2) fixed a bug in function 'addfDat':  
+#    'ff2<-ff[pos]' should be 
+#    'ff2<-ff'
+#  (3) commented out genderChecking function and will revise it later
+#
+# Version 0.5.9 (Dec. 13, 2012)
+#  (1) in 'myCombine.R', put combining phenotype data step before merging
+#  feature data and expression data
+#
+# Version 0.5.8 (Nov. 14, 2012)
+#  (1) added function 'lkhrWrapper' to do likelihood ratio test
+#
+# Version 0.5.7 (Oct. 2, 2012)
+#  (1) add function genExprSet
+#  (2) remove 'pcaMethods' package
+#  (3) complete vingette
+#
+# Version 0.5.6 (July 20, 2012)
+#  (1) fill in the vingette (to be continued)
+#
+# Version 0.5.5 (July 20, 2012)
+#  (1) revised the functions 'pca2DPlot' and 'pca3DPlot': 
+#        R2vec<-egvals/sum(egvals) instead of
+#        R2vec<-egvals/sum(egvals)[plot.dim]
+#      Also replace
+#        round(R2vec[1],2) with 
+#        round(R2vec[plot.dim[1]],2) 
+#
+# Version 0.5.4 (June 1, 2012)
+#  (1) revised the function getPCAFunc to use 'prcomp' to
+#      obtain principal components. The inputs 'scale' and 'center' were
+#      replaced by 'corFlag'
+#
+# Version 0.5.3 (May 28, 2012)
+#  (1) revised read data functions to allow arrays' chip versions are
+#  different
+# Version 0.5.2 (March 16, 2012)
+#  (1) fixed a bug in function 'filterFunc':
+#      'subjIDs.all<-subjID' should be
+#      'subjIDs.all <- as.character(pDat[, c(subjID)])' 
+#
+# Version 0.5.1 (Jan. 31, 2012)
+#  (1) fixed a bug in 'outputFunc': sum() should set 'na.rm=TRUE'
+#
+# Version 0.5.0 (Jan. 6, 2012)
+#  (1) revised the function 'myCombine': replace 'which' by 'match'
+#
+# Version 0.4.9 (Dec. 19, 2011)
+#  (1) revise the description of the argument 'es' in function 'genderCheck'
+#  (2) change the default value of the argument 'plotFlag' in function
+#      'genderCheck' to be 'TRUE'.
+#  (3) add randomForest classification in function 'genderCheck'
+#
+#  (4) add vignette
+#
+# Version 0.4.8 (Dec. 16, 2011)
+#  (1) revised the function 'genderCheck': first remove confounding
+#      effects; the argment 'formula' was replaced by 'var.gender';
+#      the default value for the argument 'probeType' changed to 'Yonly'
+#
+# Version 0.4.7 (Nov. 30, 2011)
+#  (1) fixed a bug in function 'myfilter': forgot put the filtering
+#        of probes with empty gene symbols in condition 'filter=TRUE'
+#
+# Version 0.4.6 (July 27, 2011)
+#  (1) added 2 arguments 'scale' and 'center' to the function
+#    'getPCAFunc'
+#  (2) fixed bug in function 'extractIDs3': some times, 'Study_Name' can take
+#  value 'CONTRL' instead of 'CONTROL'
+#
+# Version 0.4.5 (July 25, 2011)
+#  (1) fixed a bug in myCombine function
+#      I forgot check if chipver.x and chipver.y are NULL
+#
+# Version 0.4.4 (June 6, 2011)
+#  (1) simplify function 'separatePairs'
+#
+# Version 0.4.3 (May 18, 2011)
+#  (1) fixed a bug: the line colors and line types in plot produced 
+#      by quantilePlot
+#      are not distinguishable
+#  (2) fixed a bug in 'filterFunc': 
+#     'cn<-as.character(pDat[,c(subjID)][pos.rep])'
+#      should be
+#     'cn<-sampleNames(es)[pos.rep]'
+#  (3) fixed a bug in 'lmFitPaired', 'lmFitWrapper': should check if there is only intercept in the model
+#      if yes, then need to make sure the pvalMat.unsorted and
+#      statMat.unsorted are matrices, instead of vectors
+#  (4) fixed a bug in 'vst' of lumi package: min and max should use the
+#      option 'na.rm=TRUE'
+#      
+#
+# Version 0.4.2 (May 17, 2011)
+#  (1)  fixed a bug in separateGCnonGC which caused wrong objects
+#       when there are no GC arrays in the ExpressionSet object
+#  (2) added an input option 'sortFlag'. If sortFlag=TRUE, then
+#      arrays will be sorted by MAD (median absolute deviation)
+#  (3) fixed a bug in 'plotSamplep95p05': the output should be 'res'
+#     not 'qMat'
+#
+# Version 0.4.1 (May 12, 2011)
+#  (1) fixed a bug in 'filterFunc': if(excludeGC) should be
+#        if(excludeGC && n.pos)
+#  (2) fixed a bug in 'readDataLst.default', 'readData1File.default', and
+#       'readData.default': should use 'extractIDs'
+#       instead of 'extractIDs3'
+#  (3) added 'projLocLst<-unique(projLocLst)' to avoid duplication
+#      in function readDataLst.default
+#
+# Version 0.4.0 (April 2, 2011)
+#  (1) simplify the code for extractIDs  
+#  (2) simplify the code for addfDat
+#  (3) simplify the code for mergeDuplicates
+#  (4) output number of significant tests (raw p-value < 0.05)
+#  (5) simplify the code for functions in 'myCombine.R'
+#  (6) simplify the code for function 'readData.default'
+#  (7) simplify the code for function 'readData'
+#  (8) added option 'stringsAsFactors=FALSE' in functions in readbgx.R
+#  (9) added option 'plot.dim' to function 'pca2DPlot'
+#  (10) added function 'pca3DPlot'
+#  (11) added outputs for functions 'plotSamplep95p05' and 'quantilePlot' 
+#  (12) revised the function 'separateGCnonGC' since 
+#       GC arrays do not always started with "128115", "Hela", or "Brain" in
+#       'Hybridization_Name'
+#       e.g   there are 12 GC arrays having the 'Hybridization_Name':
+#                                                 Hybridization_Name
+#141533_GC008700115DR_4158307007_A 141533_GC008700115DR_4158307007_A
+#141532_GC008700070DR_4158307007_D 141532_GC008700070DR_4158307007_D
+#141531_GC008700099DR_4158307007_H 141531_GC008700099DR_4158307007_H
+#141534_GC008700133DR_4158307009_C 141534_GC008700133DR_4158307009_C
+#141539_GC00870017XDR_4158307010_A 141539_GC00870017XDR_4158307010_A
+#141535_GC008701024DR_4158307010_C 141535_GC008701024DR_4158307010_C
+#141536_GC008700151DR_4158307011_A 141536_GC008700151DR_4158307011_A
+#141538_GC008700214DR_4158307011_D 141538_GC008700214DR_4158307011_D
+#141540_GC008700198DR_4158307011_H 141540_GC008700198DR_4158307011_H
+#141542_GC008700250DR_4158307012_F 141542_GC008700250DR_4158307012_F
+#141537_GC008700232DR_4158307016_A 141537_GC008700232DR_4158307016_A
+#141541_GC008700279DR_4158307016_E 141541_GC008700279DR_4158307016_E
+# in the metaData file
+# /proj/reilms/reilm00/GX/CAMP/Kelan_CellLines_Nov08/DexNov08_05Nov2010_Metadata.txt
+#  (13) revised the function 'extractSamples' 
+#  (14) added the functions 'extractIDs2' and 'extractIDs3' 
+#  (15) added the output of detection p-value in function 
+#       LumiBatch2Table.R 
+#  
+#
+# Version 0.3.9 (March. 30, 2011)
+#  (1) added input option 'na.del' to preProcess function
+#      to delete probes with missing values (not implemented yet)
+#
+# Version 0.3.8 (March. 21, 2011)
+#  (1) added input option 'ylim' to functions 'boxPlotFunc'
+#      and 'boxPlotFunc.default'
+#
+# Version 0.3.7 (Feb. 23, 2011)
+#  (1) fixed a bug: the rownames of designMat for lmFit should
+#      be put back to the column names of corresponding data matrix
+#
+# Version 0.3.6 (Feb. 22, 2011)
+#  (1) added the option 'sortFlag' to the function 'filterFunc'
+#  (2) remove 'dpvFunc' from export list
+#
+# Version 0.3.5 (Feb. 4, 2011)
+#  (1) fixed a bug in function 'lmFitWrapper': matrix degenerated
+#      to vector when only one column
+#  (2) set 'calDPV=FALSE' by default
+#
+# Version 0.3.4 (Jan. 10, 2011)
+#  (1) removed the addition of nuID in read functions since it will be too slow
+#  (2) revised function 'dpvFunc' to use 'mclapply' instead of 'lapply'
+#      if library multicore is available to improve speed.
+#  (3) move 'multicore' to 'Suggests' in DESCRIPTION file
+#  (4) added 'dpvFunc' to NAMESPACE
+#  (5) added argument 'calDPV' to functions 'readData', 'readData1File',
+#      and 'readDataLst'
+#
+# Version 0.3.3 (Jan. 08, 2011)
+#  (1) added function 'dpvFunc' to calculate detection p-value
+#  (2) calculate detection p-value in function 'readData' 
+#  (3) added back the exportion of 'dataCleanLst', 'dataClean1File'
+#      and 'readDataLst'
+#
+# Version 0.3.2 (Dec. 21, 2010)
+#  (1) fixed a bug in 'genderCheck': forgot defining
+#       xlabPca, ylabPca, xlimPca and ylimPca 
+#
+# Version 0.3.1 (Dec. 8, 2010)
+#  (1) revise 'genderCheck' to incorporate pca plot and hclust plot
+#  (2) put functions 'readData1File', 'preProcess', and 'LumiBatch2Table' 
+#      back to export list in 'NAMESPACE'
+#  (3) added nuIDs to feature data in function 'readData.default'
+#      'filterFunc', 'normalizeFunc', and 'readData1File.default'
+#  (4) added inputs 'probeID.var', 'gene.var', and 'chr.var' to function
+#      'LumiBatch2Table'
+#  (5) replace 'ProbeID' by 'nuIDs' in output of statistical analysis results
+#
+# Version 0.3.0 (Dec. 7, 2010)
+#  (1) forgot revising function 'genderCheck' after revising function 
+#      'lmFitWrapper'
+#
+# Version 0.2.9 (Dec. 3, 2010)
+#  (1) revise function 'extractSamples' to allow get nonGC samples
+#  (2) added function 'preProcessWrapper'
+#  (3) clean NAMESPACE and INDEX to remove some functions from export list
+#  (4) added function 'separatePairs' to separate paired data 
+#
+# Version 0.2.8 (Dec. 1, 2010)
+#  (1) revise function 'mysort' so that the user can 
+#    specify which variables will be used to sort the samples
+#    of an ExpressionSet object
+#  (2) add inputs 'varSort' and 'timeFormat' to plot functions
+#  (3) revised functions 'glmWrapper' and 'lmFitWrapper'
+#     by using some modules to summary the common tasks
+#
+# Version 0.2.7 (Nov. 21, 2010)
+#  (1) put the check of the covariate of the interest
+#      outside the loop for glmWrapper to improve efficiency
+#  (2) add the check of the covariate of the interest
+#      to the functions lmFitWrapper and lmFitPaired
+#  (3) add functions  'inputChecking', 'getCovInterest',
+#      'checkCovariate' to modulize my Rcode
+#
+# Version 0.2.6 (Nov. 20, 2010)
+#  (1) added input 'pos.var.interest' to function 'glmWrapper'
+#      to indicate which covariate in the right-hand-side
+#      of ~ in the 'formula' is of the interest
+#   pos.var.interest = 0 means intercept is of the interest
+#
+# Version 0.2.5 (Nov. 19, 2010)
+#  (1) added input 'probeIDs' for the functions
+#      'lmFitWrapper' and 'glmWrapper'
+#  (2) added output 'pvalMat' and 'statMat' for the functions
+#      'lmFitWrapper' and 'glmWrapper'
+#  (3) added function 'lmFitPaired'
+#  (4) replace the statement 'resMat2<-do.call(rbind, t4)'
+#      in glmWrapper by 'resMat<-t(sapply(t4, function(x) {x}))'
+#      It is much faster now and without error 
+#
+# Version 0.2.4 (Nov. 6, 2010)
+#  (1) fixed a bug in myCombine: it will produce more rows than
+#      expected when merging controlData since row names are not unique.
+#      In function 'readData', it is okay since 'controlData' slot is
+#      NULL until we set its value after reading and combining
+#      all SampleProbeProfile and QCProbeProfile.
+#      But if we want to combine 2 LumiBatch object created by
+#      iCheck, it will cause error. No good fix yet. Just temporary fix:
+#      if two controlData have the same row names, then use cbind.
+#      if not the same, then use the rows with common row names, then use
+#      cbind. Otherwise, set combined LumiBatch object have NULL
+#      controlData.   
+#  (2) fixed a bug in 'readData1File' and 'readData1File.default':
+#      no need to use option 'combineRule' and no need to use variable count
+#
+# Version 0.2.3 (Nov. 5, 2010)
+#  (1) fixed a bug in pca2DPlot: forgot define 'sortFlag' in arguments
+#
+# Version 0.2.2 (Nov. 5, 2010)
+#  (1) To make sure sorting Batch_Run_Date correctly,
+#      Batch_Run_Date should have the format m/d/yyyy
+#      Note that year should contain century. e.g. 2010, not 10
+#
+# Version 0.2.1 (Nov. 4, 2010)
+#  (1) the function 'scores' is from library 'pls', not 'pcaMethods'
+#  (2) add 'pcaMethods' to line 'Depends' in file 'DESCRIPTION'
+#  (3) add option 'sortFlag' to related plot functions
+#  (4) split function 'preProcess' to 2 functions:
+#      'preProcess' and 'normalizeFunc'
+#  (5) added function 'glmWrapper'
+#
+# Version 0.2.0 (Oct. 29, 2010)
+#  (1) fixed a bug in 'lmFitWrapper': sometimes the rownames of
+#    'designMat' is not numeric. Hence, we added an temporary pDat2
+#     to generate designMat
+#  (2) fixed a bug in print out top 20 genes in 'lmFitWrapper'
+#
+# Version 0.1.9 (Oct. 6, 2010)
+#  (1) fixed a bug in 'lmFitWrapper': the number of rows of
+#     'designMat' might be less than that of pDat due to
+#     missing values. Hence, we need to reduce the dimension of
+#     'dat'
+#  (2) added function 'pcaPlotFunc' to draw scatter plot of
+#      first 2 principal components of subjects. (very slow)
+#  (3) added function 'quantilePlot' to draw quantiles across arrays
+#  (4) revised function 'hclustPlotFunc' to add color to labels
+#  (5) added function 'pca2DPlot'
+#  (6) using grDevices::rainbow to define colors
+#  (7) added function 'replacePheno2es'
+#  (8) added functions 'getDatColnames' and 'extractREplicates'
+#  (9) revised 'plotSample95p05'
+
+#
+# Version 0.1.7 (Sept. 24, 2010)
+#  (1) fixed a bug: should add ... when calling function 'axis'
+#      in function plotCurves and when calling boxplot in plotFuncs.R
+#
+# Version 0.1.6 (Sept. 24, 2010)
+#  (1) fixed a bug: The object 'beadNum.y' in the command
+#     'colnames(beadNum.y) <- sn.y' in the file 'myCombine.R'
+#     should be 'beadNum.dat.y'
+#
+# Version 0.1.5 (Sept. 10, 2010)
+#  (1) fixed a bug: Some times, Probe_Sequence is not unique,
+#      that is, The same Probe_Sequence might correspond to mulitple 
+#      probe ids. In this case, if we use Probe_Sequence
+#      as featureNames, we will get error message.
+#      Hence, we need to merge duplicates first, before
+#      set Probe_Sequence as featureNames.
+#  (2) fixed a bug in myCombine.R: after merging, the order of
+#      Probe Sequences of data might be different from that of fData
+#  (3) added check if any subject Ids are duplicated in a SampleProbeProfile
+#      or QCProbProfile immediately after calling 'lumiR'
+#  (4) added check if any subject Ids are duplicated in a SampleProbeProfile
+#      or QCProbProfile in function 'myCombineUnion'
+#  (5) added function 'LumiBatch2Table' to output exprs, pDat, fDat of
+#      an LumiBatch object to 3 text files
+#  (6) added function 'lmFitWrapper' to do gene differential analysis
+#  (7) added function 'plotSamplep95p05' to draw the trajectories
+#      of the ratio of the 95-th percentile to the 5-th percentile
+#      of expression levels across arrays.  
+#  (8) fixed a bug: The error message: "No matched manifest file!" is
+#      not correct. It should be "All samples in expression sets are not in
+#      pDat"
+#  (9) fixed a bug: After the warning message:
+#       "The following arrays which are in QC probe profile file
+#        are not in sample probe profile file!"
+#       we should call 'print(snQC.diff)' instead of 'print(sn.diff)'
+#  (10) added function 'genderCheck'
+#  (11) added functions 'readDataLst', 'readDataLst.default',
+#       and 'dataCleanLst' to read data given a list of 
+#       project locations
+
+#
+# Version 0.1.4 (August 25, 2010)
+#  (1) fixed a bug in lumiB2: 
+#quantile.ctrl <- apply(control, 2, quantile, probs = probs,
+#        ...)
+#should be 
+#quantile.ctrl <- apply(control, 2, quantile, probs = probs, na.rm=TRUE,
+#        ...)
+#  (2) remove calling 'lumiQ', which will take a lot of times
+#  (3) set 'QC=FALSE' when calling lumiR
+#  (4) fixed a bug when sorting Batch_Run_Date, Chip_Barcode,
+#      and Chip_Address. Bath_Run_Date is a vector of characters.
+#      so "7/2/2010" will be greater "7/19/2010". To fix this,
+#      we can use function 'strptime' to convert the character string
+#      to time string. Then "7/2/2010" will be smaller than "7/19/2010".
+#  (5) keep the probes in chromosomes with labels
+#       different than 1, 2, ..., 22, X, or Y, but not empty 
+#       string or not containing string "random".
+##
+# Version 0.1.3 (August 9, 2010)
+#  (1) fixed a bug: when outObjFileDir = NULL, the intermediate output
+#         will print NULL. It should output the current directory
+#  (2) added an option 'verboseQC' to mask intermediate output of QC
+#  (3) added an option 'verbose' to mask all intermediate output
+#  (4) added function 'readGCAll', 'addfDat', and myCombineUnion 
+#      to read GC samples 
+#      which might be from different Illumina chip versions.
+#  (5) added the argument 'use="complete.obs"' when calling the function
+#      'cor' in the function 'R2PlotFunc'.
+#  (6) added function 'preProcess' to conduct data pre-processing
+#      including remove replicates (Although there is a function 
+#      called 'lumiExpresso' in lumi package, we do more data pre-processing,
+#      such as excluding replicated arrays, GC samples, failed samples,
+#       probes with empty gene symbol and/or in chromosomes other than
+#       1,...,22, X, and Y)
+#
+#  (7) added function 'compareManifest' to count the overlap of probes
+#      in each Illumina chip version
+#  (8) checking the warning message: no bgAdjust is needed
+#  (9) in the function R2PlotFunc, get the replicates by checking
+#      if a subject has more than one array, instead of using
+#      the column 'Replicate_Sample' of pDat since some time this
+#      column gives wrong info
+#  (10) revise read functions so that 'manifestDir' instead of 'mDat' object  
+#     will be the input and the functions will detect which manifest file
+#     to read based on 'manifestDir' and the column 'Chip_Manifest'
+#     of pDat.   Also sample probe file and QC probe file will be 
+#     read in using one function. controlData slot will be added.
+#   (11)
+#     added an argument 'combineRule' to indicate what strategy will be
+#     used to combine two LumiBatch objects: union or intersection
+#   (12) in files 'readData.default' and 'readData1File.default',
+#       added an argument 'sampleFlag'. 'sampleFlag=TRUE' means
+#       we will read sample probe file; 'sampleFlag=FALSE' means
+#       we will read QC probe file. The manifest data are different
+#      for these two types of files.
+#  (13) There are some minor bugs in lumi's data pre-processing functions
+#       such as 'min(x)' should be 'min(x, na.rm=TRUE)'. We revised
+#       these functions so that we can do data pre-processing for
+#       LumiBatch object obtained by combining severa LumiBatch objects
+#       using "union" strategy instead of "intersection" strategy.
+#  (14) deleted functions 'readDataAll', 'readQC', 'readGC'.
+#  (15) add an argument 'saveFlag' indicating if LumiBatch object
+#       to be saved.
+#  (16) delete some arguments, eg. 'QC', 'verboseQC'.
+
+# Version 0.1.2 (August 3, 2010)
+#  (1) added output number of samples in pDat
+#
+# Version 0.1.1 (August 3, 2010)
+#  (1)  fixed a bug when handling GConly=TRUE. If there is no GC samples in
+#       file and GConly=TRUE, warning message will given.
+#       If there is no GC samples in all files and GConly=TRUE,
+#       program will exit abnormally with error message.
+#  (2) in function 'extractIDs', if no GC sample, then return NULL
+#       instead of exit abnormally
+#
+# Version 0.1.0 (July 30, 2010)
+#  (1) added argument 'GCid' for function 'R2PlotFunc'
+#  (2) added function 'boxPlotFunc.default' to draw boxplot
+#      for sample probe only, or QC probe only
+#  (3) added function 'extractSamples' to subset an ExpressionSet
+#  (4) added function 'extractIDs' to subset a character string vector
+#  (5) allow GCid be a vector of GC ids
+#
+# Version 0.0.9 (July 29, 2010)
+#  (1) added functions 'readDataAll' and 'readQCAll' to read
+#      all sampleProbeProfile files and QCProbeProfile files in a directory
+#      and in the subdirectories of this directory
+#  (2) fixed a bug in subset pDat when 'GConly=TRUE' 
+#
+# Version 0.0.8 (July 28, 2010)
+#  (1) added an argument 'filter' to functions 
+#      'readData', 'readData.default', 'readData1File'
+#      if 'filter=TRUE' (by default), then the "bad" probes
+#      will be excluded from the output
+#
+# Version 0.0.7 (July 28, 2010)
+#  (1) fixed a bug when checking failed samples
+#  (2) added functions 'readData1File' and 'readQC1File'
+#
+# Version 0.0.6 (July 27, 2010)
+#  (1) replaced 'protocalData' by 'Biobase::protocalData' in the file
+#    myCombine.R and myStack.R
+#
+#  (2) added 'combine' and 'protocalData' in the 'importForm' of 'Biobase'
+#      in NAMESPACE file
+#
+#  (3) fixed a bug in readData.R. pDat used after rm(pDat)  
+#  (4) change the argument 'outObjFile' to 'outObjFilePrefix'
+#  (5) added argument 'outObjFileDir'
+
+# Version 0.0.5 (July 21, 2010)
+#  (1) added 'read.bgx' function which is derived from
+#       the function 'readBGX' in library 'beadarray'.
+#       'readBGX' can handle .bgx file with 3 blocks
+#       [Heading], [Probes], [Controls], and 
+#       will not handle HumanHT-12 chips which
+#       have 4 blocks [Heading], [Probes], [Controls], [Columns].
+#  (2)  replace the argument 'mFileName' in read data functions
+#       by 'mDat'
+#  (3) add an argument 'labelVariable' to function 'plotQCCurves'
+#  (4) add an argument 'excludeFails' to read functions
+#  (5) set the default value of the argument 'bgAdjustMethod' to 'bgAdjust'
+#
+# Version 0.0.4 (July 20, 2010)
+#  (1) fixed a bug in assigning featureNames in readData.default
+#      and readQC.default when adding 
+#      manifest data to combined LumiBatch object
+#      The bug  caused the featureNames became 1, 2, ...
+#  (2) fixed a bug in calling lumiQ function in readData.default,
+#      readQC.default, mySummary, and myStack. By default,
+#      lumiQ will log transform data if data are not log transformed.
+#      To fix  this, set the argument 'logMode=FALSE'.
+#
+# Version 0.0.3 (July 19, 2010)
+#  (1) read functions output 'lumiBatch' objects instead of
+#       'ExpressionSet' object so that we can use
+#       lumi's functions 'lumiQ' etc.
+#  (2) do background correction and data transformation 
+#      after combining data from different chips
+#  (3) remove some objects when they are no longer used to save memory 
+#
+# Version 0.0.2 (June 28, 2010)
+#  (1) added output of un-normalized data
+#  (2) get a complete version
+#
+# Version 0.0.1 (June 25, 2010)
+# QC pipeline data tracking tools for Channing Laboratory Respirotary Group's high-dimensional Illumina mRNA expression data.
+#
+
