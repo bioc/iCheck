@@ -1,3 +1,29 @@
+#Version 1.3.1(Oct. 16, 2016)
+#  fixed the following bug by replacing vsn package by limma package
+#
+#* installing the package to build vignettes
+#      -----------------------------------
+#ERROR: dependency ‘vsn’ is not available for package ‘iCheck’
+#* removing ‘/tmp/RtmpBEUPpZ/Rinst6e5d1ea3e873/iCheck’
+      -----------------------------------
+ERROR: package installation failed
+
+#Version 1.2.1(Oct. 13, 2016)
+#  (1) fixed a bug in getPCAFunc function: "prcomp(t(dat2), cor=corFlag)" should be 
+#           prcomp(t(dat2), scale=corFlag)
+#  (2) added 
+adding
+  importFrom("grDevices", "jpeg", "png", "postscript")
+  importFrom("graphics", "stripchart")
+  importFrom("utils", "capture.output", "packageDescription",
+             "read.delim", "write.table")
+#
+#Version 1.0.1(March 31, 2016)
+#  (1) added 'Authors@R' field in DESCRIPTION file
+#  (2) modified 'Authors' field in DESCRIPTION file
+#  (3) added plot functions: scatterPlots, boxPlots, and densityPlots
+#  (4) added a note to the Example for 'lmFitPaired'
+#
 #Version 0.99.7(Sept. 29, 2015)
 ##  deleted read.bgx and readData functions from this release
 #    will add them on later

@@ -1,7 +1,7 @@
 % -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
 %\VignetteIndexEntry{iCheck}
 %\VignetteKeywords{Illumina, expression, QC}
-%\VignetteDepends{iCheck, Biobase, vsn, gplots, preprocessCore, lumi, affy, MASS, scatterplot3d, GeneSelectMMD, randomForest, rgl}
+%\VignetteDepends{iCheck, Biobase, gplots, preprocessCore, lumi, affy, MASS, scatterplot3d, GeneSelectMMD, randomForest, rgl}
 %\VignettePackage{iCheck}
 
 \documentclass[a4paper]{article}
@@ -295,6 +295,33 @@ We expect within subject correlations will be high.
        )  
 
 @
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Obtain plot of estimated density for each array}
+% detect bad arrays
+
+We next draw plot of estimated density for each array.
+We expect the estimated densities of all arrays to be similar.
+However, for real data, some patterns of the estimated densities
+might appear indicating the existence of some batch effects.
+
+Note that by default, the function argument \verb+requireLog2 = TRUE+.
+Since the distributions of simulated data are from normal distribution,
+we don't need to do log2 transformation here.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+    densityPlots(
+      es = es.raw, 
+      requireLog2 = FALSE,
+      myxlab = "expression level", 
+      datExtrFunc = exprs, 
+      fileFlag = FALSE, 
+      fileFormat = "ps", 
+      fileName = "densityPlots_sim.ps")
+
+@
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Obtain plot of quantiles across arrays}
@@ -624,9 +651,66 @@ res.lkh=lkhrWrapper(
 @
 
 
-%\section{Citation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Result Visualization}
+Once we get analysis results, we need to check if the results
+are reasonable or not (e.g,were results affected by outliers?).
+
+If the phenotype variable of interest is a binary type variable,
+then we can draw parallel boxplots of expression level versus
+the phenotype for each of top results.
+\texttt{iCheck} provides
+function \verb+boxPlots+ to do such a task.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+    boxPlots(
+      resFrame = res.limma$frame, 
+      es = es.sim, 
+      col.resFrame = c("probeIDs", "stats", "pval", "p.adj"), 
+      var.pheno = "memSubj", 
+      var.probe = "probe", 
+      var.gene = "gene", 
+      var.chr = "chr", 
+      nTop = 20, 
+      myylab = "expression level", 
+      datExtrFunc = exprs, 
+      fileFlag = FALSE, 
+      fileFormat = "ps", 
+      fileName = "boxPlots_sim.ps")
+
+@
+
+
+If the phenotype variable of interest is a continous type variable,
+then we can draw scatter plot of expression level versus
+the phenotype for each of top results. \texttt{iCheck} provides
+function \verb+scatterPlots+ to do such a task.
+
+<<echo=TRUE, eval=TRUE,print=FALSE,fig=TRUE>>=
+
+    # regard memSubj as continuos for illustration purpose
+    scatterPlots(
+      resFrame = res.limma$frame, 
+      es = es.sim, 
+      col.resFrame = c("probeIDs", "stats", "pval", "p.adj"), 
+      var.pheno = "memSubj", 
+      var.probe = "probe", 
+      var.gene = "gene", 
+      var.chr = "chr", 
+      nTop = 20, 
+      myylab = "expression level", 
+      datExtrFunc = exprs, 
+      fileFlag = FALSE, 
+      fileFormat = "ps", 
+      fileName = "scatterPlots_sim.ps")
+
+@
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \section{Session Info}
 Finally, we need to print out the session info so that
@@ -637,6 +721,7 @@ toLatex(sessionInfo())
 @ 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Citation}
 %\section{Acknowledgments}
 
 %\section{References}

@@ -1,4 +1,6 @@
 export(
+  boxPlots,
+  densityPlots,
   genExprSet,
   genSimData.BayesNormal,
   getPCAFunc,
@@ -14,6 +16,7 @@ export(
   plotSamplep95p05,
   quantilePlot,
   R2PlotFunc,
+  scatterPlots,
   sortExpressionSet
 )
 
@@ -36,7 +39,8 @@ importFrom(graphics,
           points,
           box,
           axis,
-          abline
+          abline,
+          stripchart
           )
 
 
@@ -56,7 +60,12 @@ importFrom(lmtest,
                  lrtest)
 
 importFrom(grDevices,
-                 rainbow, pdf, dev.off)
+           rainbow, 
+           pdf, 
+           dev.off, 
+           postscript, 
+           jpeg,
+           png)
 
 
 importFrom(GeneSelectMMD,
@@ -67,9 +76,6 @@ importFrom(randomForest,
 
 importFrom(scatterplot3d,
           scatterplot3d)
-
-importFrom(vsn,
-           vsn)
 
 importFrom(affy,
            bg.adjust)
@@ -101,3 +107,9 @@ importFrom(stats,
           quantile,
           mad
           )
+
+importFrom(utils,
+       write.table,
+       capture.output,
+       packageDescription,
+       read.delim)

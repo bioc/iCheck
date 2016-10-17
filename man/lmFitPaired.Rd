@@ -185,7 +185,7 @@ Weiliang Qiu <stwxq@channing.harvard.edu>,
 res.limma = lmFitPaired(
   es = es.sim, 
   formula = ~as.factor(memSubj), 
-  pos.var.interest = 0,
+  pos.var.interest = 0, # the intercept is what we are interested
   pvalAdjMethod = "fdr", 
   alpha = 0.05, 
   probeID.var = "probe", 

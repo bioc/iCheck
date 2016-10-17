@@ -1,3 +1,5 @@
+boxPlots		Draw parallel boxplots for top results
+densityPlots		Draw estimated densities for all arrays
 genExprSet              Generate ExpressionSet object
 genSimData.BayesNormal	Generate simulated data from conditional
 			normal distributions
@@ -26,4 +28,6 @@ plotSamplep95p05	Plot trajectories of the ratio of 95th percentile
 quantilePlot		Plot trajectories of quantiles across arrays
 R2PlotFunc		Draw heatmap of square of correlations among
 			arrays
+scatterPlots		Draw scatter plots of top probes and phenotype of
+			interest
 sortExpressionSet   sort the order of samples for an ExpressionSet object

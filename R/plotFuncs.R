@@ -1,4 +1,8 @@
 ###########
+# modified on March 31, 2016
+#  (1) added functions 'scatterPlots', 'boxPlots', 'densityPlots'
+#
+############
 # modified on Aug 20, 2015
 #  (1) deleted un-used functions: pcaPlotFunc
 #
@@ -504,7 +508,7 @@ getPCAFunc<-function(es,
   
   es2=es[pos,]
   nn<-min(dim(dat2))
-  pcs<-prcomp(t(dat2), cor=corFlag)
+  pcs<-prcomp(t(dat2), scale. =corFlag)
   
   res<-list(es.s=es2, pcs=pcs, requireLog2=requireLog2)
   invisible(res)
@@ -1033,6 +1037,249 @@ getDatColnames<-function(es, hybName="Hybridization_Name", labelVariable = "subj
 
   invisible(dat)
 
+}
+
+####################################
+# draw scatter plot for top 20 results
+# resFrame is the sorted data frame returned by wrapper functions
+#  like lmFitWrapper
+scatterPlots=function(
+  resFrame, 
+  es, 
+  col.resFrame=c("probeIDs", "stats", "pval", "p.adj"),
+  var.pheno="bmi",
+  var.probe="TargetID",
+  var.gene="Symbol",
+  var.chr="Chr",
+  nTop=20,
+  myylab="expression level",
+  datExtrFunc=exprs,
+  fileFlag=FALSE,
+  fileFormat="ps",
+  fileName="scatterPlots.ps")
+{
+
+  fDat=fData(es)
+  probeAll=as.character(fDat[, c(var.probe)])
+  geneAll=as.character(fDat[, c(var.gene)])
+  chrAll=as.character(fDat[, c(var.chr)])
+
+  pDat=pData(es)
+  #pheno=as.numeric(as.character(pDat[, c(var.pheno)]))
+  pheno=pDat[, c(var.pheno)]
+
+  ####
+  frame=resFrame
+  frame2=frame[1:nTop,]
+
+  cpg.sel=as.character(frame2[, c(col.resFrame[1])])
+  pos=match(cpg.sel, probeAll)
+  if(sum(is.na(pos)==TRUE))
+  {
+    stop("some top probes are not in 'es'!")
+  }
+
+  gene.sel=geneAll[pos]
+  chr.sel=chrAll[pos]
+
+  dat=datExtrFunc(es)
+  dat2=dat[pos,,drop=FALSE]
+ 
+  stats=frame2[, c(col.resFrame[2])]
+  pval=frame2[, c(col.resFrame[3])]
+  p.adj=frame[, c(col.resFrame[4])]
+ 
+  if(fileFlag)
+  {
+    if(fileFormat=="ps")
+    {
+      postscript(file=fileName, horizontal=TRUE, paper="letter")
+    } else if(fileFormat=="pdf"){
+      pdf(file=fileName)
+    } else if(fileFormat=="jpeg"){
+      jpeg(filename=fileName)
+    } else {
+      png(filename=fileName)
+    }
+  }
+
+  for(i in 1:nTop)
+  {
+    yi=dat2[i,]
+    plot(x=pheno, y=yi, 
+      xlab=var.pheno, ylab=myylab,
+      type="p",
+      main=paste("scatterplot of ", var.pheno, 
+        "\n", cpg.sel[i], "(", gene.sel[i],
+        ", chr=", chr.sel[i], ")", sep=""),
+
+      sub=paste("stat=", round(stats[i],2),
+         ", pval=", sprintf("%.1e", pval[i]),
+         ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+  }
+  if(fileFlag)
+  {
+    dev.off()
+  }
+
+  invisible(0)
+}
+
+# draw parallel boxplots for top 20 results
+# resFrame is the sorted data frame returned by wrapper functions
+#  like lmFitWrapper
+boxPlots=function(
+  resFrame, 
+  es, 
+  col.resFrame = c("probeIDs", "stats", "pval", "p.adj"), 
+  var.pheno = "sex", 
+  var.probe = "TargetID", 
+  var.gene = "Symbol", 
+  var.chr = "Chr", 
+  nTop = 20, 
+  myylab = "expression level", 
+  datExtrFunc = exprs, 
+  fileFlag = FALSE, 
+  fileFormat = "ps", 
+  fileName = "boxPlots.ps")
+{
+
+  fDat=fData(es)
+  probeAll=as.character(fDat[, c(var.probe)])
+  geneAll=as.character(fDat[, c(var.gene)])
+  chrAll=as.character(fDat[, c(var.chr)])
+
+  pDat=pData(es)
+  #pheno=as.numeric(as.character(pDat[, c(var.pheno)]))
+  pheno=pDat[, c(var.pheno)]
+
+  ####
+  frame=resFrame
+  frame2=frame[1:nTop,]
+
+  cpg.sel=as.character(frame2[, c(col.resFrame[1])])
+  pos=match(cpg.sel, probeAll)
+  if(sum(is.na(pos)==TRUE))
+  {
+    stop("some top probes are not in 'es'!")
+  }
+
+  gene.sel=geneAll[pos]
+  chr.sel=chrAll[pos]
+
+  # rows are probes and columns are arrays
+  dat=datExtrFunc(es)
+  dat2=dat[pos,,drop=FALSE]
+ 
+  stats=frame2[, c(col.resFrame[2])]
+  pval=frame2[, c(col.resFrame[3])]
+  p.adj=frame[, c(col.resFrame[4])]
+ 
+  if(fileFlag)
+  {
+    if(fileFormat=="ps")
+    {
+      postscript(file=fileName, horizontal=TRUE, paper="letter")
+    } else if(fileFormat=="pdf"){
+      pdf(file=fileName)
+    } else if(fileFormat=="jpeg"){
+      jpeg(filename=fileName)
+    } else {
+      png(filename=fileName)
+    }
+  }
+
+  for(i in 1:nTop)
+  {
+    yi=dat2[i,]
+    ttdati=data.frame(yi=yi, pheno=pheno)
+    boxplot(yi~pheno,dat=ttdati,
+      xlab="", ylab=myylab,
+      main=paste("boxplot of ", var.pheno, 
+        "\n", cpg.sel[i], "(", gene.sel[i],
+        ", chr=", chr.sel[i], ")", sep=""),
+      sub=paste("stat=", round(stats[i],2),
+         ", pval=", sprintf("%.1e", pval[i]),
+         ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+
+    stripchart(yi~pheno, dat=ttdati,
+            vertical = TRUE, method = "jitter", 
+            pch = 21, col = "maroon", bg = "bisque", 
+            add = TRUE) 
+  }
+  if(fileFlag)
+  {
+    dev.off()
+  }
+
+  invisible(0)
+}
+
+# draw estimated density plots for all arrays
+densityPlots=function(
+  es, 
+  requireLog2 = TRUE,
+  myxlab = "expression level", 
+  mymain = "density plots",
+  datExtrFunc = exprs, 
+  fileFlag = FALSE, 
+  fileFormat = "ps", 
+  fileName = "densityPlots.ps")
+{
+
+  nArray=ncol(es)
+  dat=datExtrFunc(es)
+  if(requireLog2)
+  {
+    dat=log2(dat)
+  }
+
+  dLst=list()
+  x=NULL
+  y=NULL
+  for(i in 1:nArray)
+  {
+    dLst[[i]]=density(na.omit(dat[,i]))
+    x=c(x, dLst[[i]]$x)
+    y=c(y, dLst[[i]]$y)
+  }
+  
+  myxlim=range(x, na.rm=TRUE)
+  myylim=range(y, na.rm=TRUE)
+
+  if(fileFlag)
+  {
+    if(fileFormat=="ps")
+    {
+      postscript(file=fileName, horizontal=TRUE, paper="letter")
+    } else if(fileFormat=="pdf"){
+      pdf(file=fileName)
+    } else if(fileFormat=="jpeg"){
+      jpeg(filename=fileName)
+    } else {
+      png(filename=fileName)
+    }
+  }
+
+  plot(x=dLst[[1]]$x, y=dLst[[1]]$y, 
+    xlim=myxlim, ylim=myylim,
+    xlab=myxlab, ylab="Density", type="l",
+    main=mymain)
+  
+  
+  for(i in 2:nArray)
+  {
+    lines(x=dLst[[i]]$x, y=dLst[[i]]$y, 
+      xlim=myxlim, ylim=myylim,
+      xlab="beta value", ylab="Density")
+  }
+  
+  if(fileFlag)
+  {
+    dev.off()
+  }
+
+  invisible(dLst)
 }
 
 
