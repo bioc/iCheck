@@ -1,4 +1,9 @@
 ###########
+# modified on Nov. 17, 2016
+#  (1) revised 'scatterPlots', 'boxPlots' so that
+#      the user can choose not output 'p.adj' in the subtitle
+#  (2) add input options 'outcomeFlag' and 'fitLineFlag' to 'scatterPlots'
+#
 # modified on March 31, 2016
 #  (1) added functions 'scatterPlots', 'boxPlots', 'densityPlots'
 #
@@ -111,7 +116,7 @@ plotQCCurves<-function(esQC,
         ylab2="p95/p05"
       }
       par(mar=mar)
-      plot(1:p, ratio, type="l",
+      plot(x=1:p, y=ratio, type="l",
         xlab=xlab, ylab=ylab2,
         main="p95/p05", cex=cex,
         ylim=ylim, col=1, lty=1, lwd=lwd, axes=FALSE,
@@ -279,14 +284,14 @@ plotSamplep95p05<-function(es,
   }
   par(mar=mar)
   mycols <- grDevices::rainbow(nClusters)
-  plot(1:p, ratio, type="l",
+  plot(x=1:p, y=ratio, type="l",
     xlab=xlab, ylab=ylab2,
     main=title, cex=cex,
     ylim=ylim, col=1, pch=labels, lty=1, lwd=lwd, axes=FALSE,
     ...)
   if(labelVariable!="subjID")
   {
-    points(1:p, ratio,
+    points(x=1:p, y=ratio,
       col=mycols[labels], pch=labels, lwd=lwd,
       ...)
   }
@@ -348,7 +353,7 @@ plotCurves<-function(dat, curveNames, fileName,
   } 
   mycols <- grDevices::rainbow(n)
   par(mar=mar)
-  plot(1:p, dat[1,], type="l",
+  plot(x=1:p, y=dat[1,], type="l",
     xlab=xlab, ylab=ylab,
     main=main, cex=cex,
     ylim=ylim, col=mycols[1], lty=1, lwd=lwd, axes=FALSE, las=las,
@@ -360,7 +365,7 @@ plotCurves<-function(dat, curveNames, fileName,
   {
     for(i in 2:n)
     {
-      lines(1:p, dat[i,], col=mycols[i], lty=i, lwd=lwd)
+      lines(x=1:p, y=dat[i,], col=mycols[i], lty=i, lwd=lwd)
     }
   }
   legend("topright", legend=curveNames,
@@ -382,7 +387,7 @@ quantilePlot<-function(dat, fileName,
     cex=1,
     ylim=NULL, xlab="", ylab="intensity", lwd=3,
     main="Trajectory plot of quantiles", mar=c(15, 4, 4, 2) + 0.1, las=2, 
-    cex.axis=1, ...)
+    cex.axis=1)
 {
   if (!interactive())
   {
@@ -423,19 +428,19 @@ quantilePlot<-function(dat, fileName,
   par(mar=mar)
   #mycols <- grDevices::rainbow(n)
   mycols <- 1:n
-  plot(1:p, qMat[1,], type="l",
+  plot(x=1:p, y=qMat[1,], type="l",
     xlab=xlab, ylab=ylab,
     main=main, cex=cex,
     ylim=ylim, col=mycols[1], lty=1, lwd=lwd, axes=FALSE, las=las,
-    ...)
+    )
   box()
-  axis(side=2, cex.axis=1, ...)
-  axis(side=1, at=1:p, labels=arrayNames, las=2, cex.axis=cex.axis, ...)
+  axis(side=2, cex.axis=1)
+  axis(side=1, at=1:p, labels=arrayNames, las=2, cex.axis=cex.axis)
   if(n>1)
   {
     for(i in 2:n)
     {
-      lines(1:p, qMat[i,], col=mycols[i], lty=i, lwd=lwd)
+      lines(x=1:p, y=qMat[i,], col=mycols[i], lty=i, lwd=lwd)
     }
   }
   legend("topright", legend=curveNames,
@@ -653,7 +658,7 @@ pca2DPlot<-function(pcaObj,
     {
       for(i in 2:nClusters)
       {
-        points(aa[labels==labels.u[i],1], aa[labels==labels.u[i],2],
+        points(x=aa[labels==labels.u[i],1], y=aa[labels==labels.u[i],2],
           col=mycols[i], pch=labels.u[i], lwd=lwd, ...)
       }
     }
@@ -1048,6 +1053,8 @@ scatterPlots=function(
   es, 
   col.resFrame=c("probeIDs", "stats", "pval", "p.adj"),
   var.pheno="bmi",
+  outcomeFlag = FALSE,
+  fitLineFlag = TRUE,
   var.probe="TargetID",
   var.gene="Symbol",
   var.chr="Chr",
@@ -1087,7 +1094,10 @@ scatterPlots=function(
  
   stats=frame2[, c(col.resFrame[2])]
   pval=frame2[, c(col.resFrame[3])]
-  p.adj=frame[, c(col.resFrame[4])]
+  if(length(col.resFrame)==4)
+  {
+    p.adj=frame[, c(col.resFrame[4])]
+  }
  
   if(fileFlag)
   {
@@ -1103,19 +1113,75 @@ scatterPlots=function(
     }
   }
 
-  for(i in 1:nTop)
+  if(length(col.resFrame)==4)
   {
-    yi=dat2[i,]
-    plot(x=pheno, y=yi, 
-      xlab=var.pheno, ylab=myylab,
-      type="p",
-      main=paste("scatterplot of ", var.pheno, 
-        "\n", cpg.sel[i], "(", gene.sel[i],
-        ", chr=", chr.sel[i], ")", sep=""),
+    for(i in 1:nTop)
+    {
+      yi=dat2[i,]
+      if(outcomeFlag) # i.e. 'pheno' is the outcome variable (y-axis)
+      {
+        myx=yi
+        myy=pheno
+        xlab=myylab
+        ylab=var.pheno
+      } else {
+        myx=pheno
+        myy=yi
+        xlab=var.pheno
+        ylab=myylab
+      }
+      plot(x=myx, y=myy, 
+        xlab=xlab, ylab=ylab,
+        type="p",
+        main=paste("scatterplot of ", var.pheno, 
+          "\n", cpg.sel[i], "(", gene.sel[i],
+          ", chr=", chr.sel[i], ")", sep=""),
+  
+        sub=paste("stat=", round(stats[i],2),
+           ", pval=", sprintf("%.1e", pval[i]),
+           ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+      if(fitLineFlag)
+      {
+        res.lm=lm(myy~myx)
+        coef=res.lm$coefficients
+        abline(a=res.lm$coefficients[1], b=res.lm$coefficients[2], col=2)
+      }
+    }
+  } else {
+    for(i in 1:nTop)
+    {
+      yi=dat2[i,]
+      if(outcomeFlag) # i.e. 'pheno' is the outcome variable (y-axis)
+      {
+        myx=yi
+        myy=pheno
+        xlab=myylab
+        ylab=var.pheno
+      } else {
+        myx=pheno
+        myy=yi
+        xlab=var.pheno
+        ylab=myylab
+      }
 
-      sub=paste("stat=", round(stats[i],2),
-         ", pval=", sprintf("%.1e", pval[i]),
-         ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+      plot(x=myx, y=myy, 
+        xlab=xlab, ylab=ylab,
+        type="p",
+        main=paste("scatterplot of ", var.pheno, 
+          "\n", cpg.sel[i], "(", gene.sel[i],
+          ", chr=", chr.sel[i], ")", sep=""),
+  
+        sub=paste("stat=", round(stats[i],2),
+           ", pval=", sprintf("%.1e", pval[i]),
+           sep=""))
+      if(fitLineFlag)
+      {
+        res.lm=lm(myy~myx)
+        coef=res.lm$coefficients
+        abline(a=res.lm$coefficients[1], b=res.lm$coefficients[2], col=2)
+      }
+    }
+
   }
   if(fileFlag)
   {
@@ -1173,7 +1239,10 @@ boxPlots=function(
  
   stats=frame2[, c(col.resFrame[2])]
   pval=frame2[, c(col.resFrame[3])]
-  p.adj=frame[, c(col.resFrame[4])]
+  if(length(col.resFrame)==4)
+  {
+    p.adj=frame[, c(col.resFrame[4])]
+  }
  
   if(fileFlag)
   {
@@ -1189,23 +1258,46 @@ boxPlots=function(
     }
   }
 
-  for(i in 1:nTop)
+  if(length(col.resFrame)==4)
   {
-    yi=dat2[i,]
-    ttdati=data.frame(yi=yi, pheno=pheno)
-    boxplot(yi~pheno,dat=ttdati,
-      xlab="", ylab=myylab,
-      main=paste("boxplot of ", var.pheno, 
-        "\n", cpg.sel[i], "(", gene.sel[i],
-        ", chr=", chr.sel[i], ")", sep=""),
-      sub=paste("stat=", round(stats[i],2),
-         ", pval=", sprintf("%.1e", pval[i]),
-         ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+    for(i in 1:nTop)
+    {
+      yi=dat2[i,]
+      ttdati=data.frame(yi=yi, pheno=pheno)
+      boxplot(yi~pheno,dat=ttdati,
+        xlab="", ylab=myylab,
+        main=paste("boxplot of ", var.pheno, 
+          "\n", cpg.sel[i], "(", gene.sel[i],
+          ", chr=", chr.sel[i], ")", sep=""),
+        sub=paste("stat=", round(stats[i],2),
+           ", pval=", sprintf("%.1e", pval[i]),
+           ", p.adj=", sprintf("%.1e", p.adj[i]),sep=""))
+  
+      stripchart(yi~pheno, dat=ttdati,
+              vertical = TRUE, method = "jitter", 
+              pch = 21, col = "maroon", bg = "bisque", 
+              add = TRUE) 
+    }
+  } else {
+    for(i in 1:nTop)
+    {
+      yi=dat2[i,]
+      ttdati=data.frame(yi=yi, pheno=pheno)
+      boxplot(yi~pheno,dat=ttdati,
+        xlab="", ylab=myylab,
+        main=paste("boxplot of ", var.pheno, 
+          "\n", cpg.sel[i], "(", gene.sel[i],
+          ", chr=", chr.sel[i], ")", sep=""),
+        sub=paste("stat=", round(stats[i],2),
+           ", pval=", sprintf("%.1e", pval[i]),
+           sep=""))
+  
+      stripchart(yi~pheno, dat=ttdati,
+              vertical = TRUE, method = "jitter", 
+              pch = 21, col = "maroon", bg = "bisque", 
+              add = TRUE) 
+    }
 
-    stripchart(yi~pheno, dat=ttdati,
-            vertical = TRUE, method = "jitter", 
-            pch = 21, col = "maroon", bg = "bisque", 
-            add = TRUE) 
   }
   if(fileFlag)
   {

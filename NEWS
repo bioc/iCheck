@@ -1,3 +1,12 @@
+#Version 1.5.1(Nov. 17, 2016)
+##  (1) fixed a bug in quantilePlots function: drop the "..." option
+##  (2) added "x=", and "y=" in plot(), lines(), and points()
+##  (3) revised functions 'scatterPlots' and 'boxPlots' so that
+##      the user can choose not output 'p.adj' in the subtitle
+#   (4) add input options 'outcomeFlag' and 'fitLineFlag' to 'scatterPlots'
+#   (5) added Rd files for  functions 'scatterPlots', 'boxPlots', 
+#         and 'densityPlots'
+#
 #Version 1.3.1(Oct. 16, 2016)
 #  fixed the following bug by replacing vsn package by limma package
 #

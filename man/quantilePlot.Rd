@@ -22,8 +22,7 @@ quantilePlot(
     main = "Trajectory plot of quantiles", 
     mar = c(15, 4, 4, 2) + 0.1, 
     las = 2, 
-    cex.axis = 1, 
-    ...)
+    cex.axis = 1)
 }
 \arguments{
   \item{dat}{
@@ -90,9 +89,6 @@ setting of cex.
 
 see \code{\link{par}}.
 }
-  \item{\dots}{
-Arguments to be passed to \code{\link{plot}}.
-}
 }
 \value{
 The quantile matrix with row quantiles and column array. 
@@ -118,13 +114,15 @@ Weiliang Qiu <stwxq@channing.harvard.edu>,
 
 
    png(file="qplot.png")
-quantilePlot(
-  dat = exprs(es.sim), 
-  probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1), 
-  plotOutPutFlag = FALSE, 
-  requireLog2 = FALSE, 
-  sortFlag = TRUE)
-dev.off()
+
+     quantilePlot(
+       dat = exprs(es.sim), 
+       probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1), 
+       plotOutPutFlag = FALSE, 
+       requireLog2 = FALSE, 
+       sortFlag = TRUE)
+
+   dev.off()
   
 }
 \keyword{ methods }
