@@ -2,7 +2,7 @@ Package: iCheck
 Type: Package
 Title: QC Pipeline and Data Analysis Tools for High-Dimensional
         Illumina mRNA Expression Data
-Version: 1.15.0
+Version: 1.16.0
 Date: 2016-11-17
 Authors@R: c(person("Weiliang", "Qiu", role=c("aut", "cre"),
                      email = "stwxq@channing.harvard.edu"),
